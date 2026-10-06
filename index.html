@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>☕ 단체 커피 주문</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f6f8;color:#222;font-family:Arial,"Noto Sans KR",sans-serif}
+header{background:#242a31;color:#fff;padding:18px 20px;position:sticky;top:0;z-index:5}header h1{margin:0 0 5px;font-size:21px}header p{margin:0;color:#cbd0d5;font-size:13px}
+main{max-width:900px;margin:auto;padding:16px}.card{background:#fff;border-radius:16px;padding:18px;margin-bottom:16px;box-shadow:0 4px 18px #0000000d}
+label{font-size:13px;font-weight:bold;color:#555}.name{width:100%;padding:13px;border:1px solid #ddd;border-radius:10px;margin-top:7px;font-size:16px}
+h2{font-size:18px;margin:0 0 14px}.cat{margin-top:18px}.cat:first-child{margin-top:0}.cat-title{font-weight:700;color:#666;margin-bottom:9px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.menu{border:1px solid #ddd;background:#fff;border-radius:12px;padding:13px;text-align:left;cursor:pointer}.menu:active{transform:scale(.98)}.menu b{display:block;font-size:15px}.menu small{color:#777}
+.order-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #eee}.order-row:last-child{border-bottom:0}
+.qty{display:flex;align-items:center;gap:8px}.qty button{border:0;background:#eef0f2;width:30px;height:30px;border-radius:8px;font-size:17px}
+.total{display:flex;justify-content:space-between;border-top:2px solid #222;padding-top:13px;margin-top:12px;font-size:19px;font-weight:bold}
+button.submit{width:100%;margin-top:15px;padding:14px;border:0;border-radius:11px;background:#242a31;color:#fff;font-size:16px;font-weight:bold}
+.empty{text-align:center;color:#999;padding:20px}.status{font-size:12px;color:#777;margin-top:10px}.live{color:#16834a;font-weight:bold}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:9px;border-bottom:1px solid #eee}
+th{background:#f7f7f7}
+ 
+@media(min-width:700px){
+.grid{grid-template-columns:repeat(3,1fr)}
+}
+ 
+.reset-btn{
+background:#dc3545;
+color:#fff;
+border:none;
+border-radius:8px;
+padding:10px 15px;
+cursor:pointer;
+margin-bottom:15px;
+font-weight:bold;
+}
+ 
+.reset-btn:hover{
+background:#c82333;
+}
+ 
+</style></style>
+</head>
+<body>
+<header><h1>☕ 단체 커피 주문</h1><p>이름을 입력하고 메뉴를 선택한 뒤 주문을 제출하세요.</p></header>
+<main>
+<div class="card">
+<label>주문자 이름</label>
+<input id="name" class="name" placeholder="예: 홍길동">
+</div>
+<div class="card"><h2>메뉴 선택</h2><div id="menus"></div></div>
+<div class="card">
+<h2>내 주문</h2><div id="cart"></div>
+<div class="total"><span>총 수량</span><span id="total">0잔</span></div>
+<button class="submit" onclick="submitOrder()">주문 제출</button>
+<div class="status" id="status"></div>
+</div>
+<div class="card">
+<h2>현재 주문 현황 <span class="live">● 실시간</span></h2>
+<button onclick="resetOrders()" class="reset-btn">
+전체 주문 초기화
+</button>
+<div id="allOrders" class="empty">주문을 불러오는 중...</div>
+</div>
+</main>
+<script>
+const menus={
+"☕ Coffee":[["아메리카노",4500],["카페라떼",5000],["카푸치노",5000],["바닐라라떼",5500],["카페모카",5500],["카라멜마키아또",5500],["콜드브루",5000],["콜드브루 라떼",5500]],
+"🍵 Non-Coffee":[["녹차라떼",5000],["초코라떼",5000],["밀크티",5000],["고구마라떼",5500]],
+"🧊 Beverage":[["레몬에이드",5500],["자몽에이드",5500],["복숭아 아이스티",4500],["청포도에이드",5500]],
+"🍰 Dessert":[["치즈케이크",6000],["초코케이크",6000],["크루아상",4500],["마카롱",2500]]
+};
+let cart={};
+
+function renderMenus(){
+ let el=document.getElementById('menus');el.innerHTML='';
+ for(const [cat,items] of Object.entries(menus)){
+  el.innerHTML+=`<div class="cat"><div class="cat-title">${cat}</div><div class="grid">${items.map(x=>`<button class="menu" onclick="add('${x[0]}',${x[1]})"><b>${x[0]}</b><small>${x[1].toLocaleString()}원</small></button>`).join('')}</div></div>`;
+ }
+}
+function add(n,p){if(!cart[n])cart[n]={price:p,qty:0};cart[n].qty++;renderCart()}
+function ch(n,d){cart[n].qty+=d;if(cart[n].qty<=0)delete cart[n];renderCart()}
+function renderCart(){
+ let e=document.getElementById('cart'),a=Object.entries(cart);
+ e.innerHTML=a.length?a.map(([n,v])=>`<div class="order-row"><span>${n}</span><span class="qty"><button onclick="ch('${n}',-1)">−</button><b>${v.qty}</b><button onclick="ch('${n}',1)">+</button></span></div>`).join(''):'<div class="empty">메뉴를 선택하세요.</div>';
+ document.getElementById('total').textContent=a.reduce((s,[n,v])=>s+v.qty,0)+'잔';
+}
+ const name=document.getElementById('name').value.trim();
+ if(!name)return alert('주문자 이름을 입력해주세요.');
+ if(!Object.keys(cart).length)return alert('메뉴를 선택해주세요.');
+ const payload={name,items:Object.entries(cart).map(([menu,v])=>({menu,qty:v.qty,price:v.price}))};
+ document.getElementById('status').textContent='주문 제출 중...';
+ try{
+  const r=await fetch('/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  if(!r.ok)throw new Error();
+  cart={};renderCart();document.getElementById('status').innerHTML='<span class="live">주문이 접수되었습니다.</span>'
+ }catch(e){document.getElementById('status').textContent='서버 연결이 필요합니다. 아래 설치 안내를 참고하세요.'}
+}
+function renderOrders(data){
+
+  if(!data || data.length===0){
+    document.getElementById('allOrders').innerHTML =
+      '<div class="empty">아직 주문이 없습니다.</div>';
+    return;
+  }
+
+  const html = data.map(x => {
+
+    const items = Array.isArray(x.items)
+      ? x.items
+      : [];
+
+    return `
+      <tr>
+        <td>${x.name || '-'}</td>
+        <td>${items.map(i => i.menu).join(', ')}</td>
+        <td>${items.reduce((a,i)=>a+(i.qty||0),0)}잔</td>
+      </tr>
+    `;
+
+  }).join('');
+
+  document.getElementById('allOrders').innerHTML =
+    `
+      <table>
+        <tr>
+          <th>주문자</th>
+          <th>주문</th>
+          <th>수량</th>
+        </tr>
+        ${html}
+      </table>
+    `;
+}
+renderMenus();renderCart();
+</script>
+<!-- Firebase SDK 로드 및 초기화 -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import {
+getFirestore,
+collection,
+addDoc,
+onSnapshot,
+getDocs,
+deleteDoc,
+doc
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  // 성윤님의 newjin-coffee-dashboard 프로젝트 구성 정보
+const firebaseConfig = {
+apiKey: "AIzaSyD-2TW5sR9qhuCgQxwf7ysFhLi1WwCPBT8",
+authDomain: "newjin-coffee-dashboard.firebaseapp.com",
+projectId: "newjin-coffee-dashboard",
+storageBucket: "newjin-coffee-dashboard.firebasestorage.app",
+messagingSenderId: "157316244820",
+appId: "1:157316244820:web:9ca89db007550bd274d4c1"
+};
+
+  // 파이어베이스 및 파이어스토어 초기화
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+window.submitOrder = async function () {
+
+  const name = document.getElementById('name').value.trim();
+
+  if (!name) {
+    alert('주문자 이름을 입력해주세요.');
+    return;
+  }
+
+  if (!Object.keys(cart).length) {
+    alert('메뉴를 선택해주세요.');
+    return;
+  }
+
+  try {
+
+    await addDoc(collection(db, "orders"), {
+      name,
+      items: Object.entries(cart).map(([menu, v]) => ({
+        menu,
+        qty: v.qty,
+        price: v.price
+      })),
+      createdAt: new Date()
+    });
+
+    cart = {};
+    renderCart();
+
+    document.getElementById('status').innerHTML =
+      '<span class="live">주문이 접수되었습니다.</span>';
+
+  } catch (e) {
+
+    console.error(e);
+
+    document.getElementById('status').textContent =
+      '주문 저장 실패';
+
+  }
+};
+onSnapshot(
+  collection(db, "orders"),
+  (snapshot) => {
+
+    const data = [];
+
+    snapshot.forEach(doc => {
+      data.push(doc.data());
+    });
+
+    renderOrders(data);
+  }
+);
+window.resetOrders = async function () {
+
+  const ok = confirm(
+    "모든 주문 내역을 삭제하시겠습니까?"
+  );
+
+  if (!ok) return;
+
+  try {
+
+    const snapshot =
+      await getDocs(collection(db, "orders"));
+
+    const deletePromises = [];
+
+    snapshot.forEach(item => {
+
+      deletePromises.push(
+        deleteDoc(
+          doc(db, "orders", item.id)
+        )
+      );
+
+    });
+
+    await Promise.all(deletePromises);
+
+    alert("전체 주문이 초기화되었습니다.");
+
+  } catch (err) {
+
+    console.error(err);
+
+    alert("초기화 실패");
+
+  }
+
+};
+</script>
+</body></html>
