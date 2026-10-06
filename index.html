@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>☕ 단체 커피 주문</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #f5f6f8;
+      color: #222;
+      font-family: Arial, "Noto Sans KR", sans-serif;
+    }
+
+    header {
+      background: #242a31;
+      color: #fff;
+      padding: 18px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    header h1 {
+      margin: 0 0 5px;
+      font-size: 21px;
+    }
+
+    header p {
+      margin: 0;
+      color: #cbd0d5;
+      font-size: 13px;
+    }
+
+    main {
+      max-width: 900px;
+      margin: auto;
+      padding: 16px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 18px #0000000d;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: bold;
+      color: #555;
+    }
+
+    .name {
+      width: 100%;
+      padding: 13px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      margin-top: 7px;
+      font-size: 16px;
+    }
+
+    h2 {
+      font-size: 18px;
+      margin: 0 0 14px;
+    }
+
+    .cat {
+      margin-top: 18px;
+    }
+
+    .cat:first-child {
+      margin-top: 0;
+    }
+
+    .cat-title {
+      font-weight: 700;
+      color: #666;
+      margin-bottom: 9px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 9px;
+    }
+
+    .menu {
+      border: 1px solid #ddd;
+      background: #fff;
+      border-radius: 12px;
+      padding: 13px;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .menu:hover {
+      background: #f7f8fa;
+      border-color: #bbb;
+    }
+
+    .menu:active {
+      transform: scale(0.98);
+    }
+
+    .menu b {
+      display: block;
+      font-size: 15px;
+    }
+
+    .menu small {
+      color: #777;
+    }
+
+    .order-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 11px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .order-row:last-child {
+      border-bottom: 0;
+    }
+
+    .qty {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .qty button {
+      border: 0;
+      background: #eef0f2;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      font-size: 17px;
+      cursor: pointer;
+    }
+
+    .total {
+      display: flex;
+      justify-content: space-between;
+      border-top: 2px solid #222;
+      padding-top: 13px;
+      margin-top: 12px;
+      font-size: 19px;
+      font-weight: bold;
+    }
+
+    .submit {
+      width: 100%;
+      margin-top: 15px;
+      padding: 14px;
+      border: 0;
+      border-radius: 11px;
+      background: #242a31;
+      color: #fff;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .submit:hover {
+      background: #343b44;
+    }
+
+    .submit:disabled {
+      background: #999;
+      cursor: not-allowed;
+    }
+
+    .empty {
+      text-align: center;
+      color: #999;
+      padding: 20px;
+    }
+
+    .status {
+      font-size: 12px;
+      color: #777;
+      margin-top: 10px;
+    }
+
+    .live {
+      color: #16834a;
+      font-weight: bold;
+    }
+
+    .reset-btn {
+      background: #dc3545;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 15px;
+      cursor: pointer;
+      margin-bottom: 15px;
+      font-weight: bold;
+    }
+
+    .reset-btn:hover {
+      background: #c82333;
+    }
+
+    .reset-btn:disabled {
+      background: #999;
+      cursor: not-allowed;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 9px;
+      border-bottom: 1px solid #eee;
+    }
+
+    th {
+      background: #f7f7f7;
+    }
+
+    @media (min-width: 700px) {
+      .grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>☕ 단체 커피 주문</h1>
+    <p>이름을 입력하고 메뉴를 선택한 뒤 주문을 제출하세요.</p>
+  </header>
+
+  <main>
+
+    <div class="card">
+      <label for="name">주문자 이름</label>
+      <input
+        id="name"
+        class="name"
+        type="text"
+        placeholder="예: 홍길동"
+        autocomplete="name"
+      >
+    </div>
+
+    <div class="card">
+      <h2>메뉴 선택</h2>
+      <div id="menus"></div>
+    </div>
+
+    <div class="card">
+      <h2>내 주문</h2>
+
+      <div id="cart"></div>
+
+      <div class="total">
+        <span>총 수량</span>
+        <span id="total">0잔</span>
+      </div>
+
+      <button
+        id="submitButton"
+        class="submit"
+        type="button"
+      >
+        주문 제출
+      </button>
+
+      <div class="status" id="status"></div>
+    </div>
+
+    <div class="card">
+      <h2>
+        현재 주문 현황
+        <span class="live">● 실시간</span>
+      </h2>
+
+      <button
+        id="resetButton"
+        class="reset-btn"
+        type="button"
+      >
+        전체 주문 초기화
+      </button>
+
+      <div id="allOrders" class="empty">
+        주문을 불러오는 중...
+      </div>
+    </div>
+
+  </main>
+
+  <script type="module">
+
+    import { initializeApp }
+      from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      onSnapshot,
+      getDocs,
+      deleteDoc,
+      doc
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD-2TW5sR9qhuCgQxwf7ysFhLi1WwCPBT8",
+      authDomain: "newjin-coffee-dashboard.firebaseapp.com",
+      projectId: "newjin-coffee-dashboard",
+      storageBucket: "newjin-coffee-dashboard.firebasestorage.app",
+      messagingSenderId: "157316244820",
+      appId: "1:157316244820:web:9ca89db007550bd274d4c1"
+    };
+
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+
+    const menus = {
+      "☕ Coffee": [
+        ["아메리카노", 4500],
+        ["카페라떼", 5000],
+        ["카푸치노", 5000],
+        ["바닐라라떼", 5500],
+        ["카페모카", 5500],
+        ["카라멜마키아또", 5500],
+        ["콜드브루", 5000],
+        ["콜드브루 라떼", 5500]
+      ],
+
+      "🍵 Non-Coffee": [
+        ["녹차라떼", 5000],
+        ["초코라떼", 5000],
+        ["밀크티", 5000],
+        ["고구마라떼", 5500]
+      ],
+
+      "🧊 Beverage": [
+        ["레몬에이드", 5500],
+        ["자몽에이드", 5500],
+        ["복숭아 아이스티", 4500],
+        ["청포도에이드", 5500]
+      ],
+
+      "🍰 Dessert": [
+        ["치즈케이크", 6000],
+        ["초코케이크", 6000],
+        ["크루아상", 4500],
+        ["마카롱", 2500]
+      ]
+    };
+
+
+    let cart = {};
+
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+
+    function renderMenus() {
+      const menuContainer = document.getElementById("menus");
+
+      menuContainer.innerHTML = "";
+
+      for (const [category, items] of Object.entries(menus)) {
+        const categoryBox = document.createElement("div");
+        categoryBox.className = "cat";
+
+        const categoryTitle = document.createElement("div");
+        categoryTitle.className = "cat-title";
+        categoryTitle.textContent = category;
+
+        const grid = document.createElement("div");
+        grid.className = "grid";
+
+        items.forEach(([menuName, price]) => {
+          const button = document.createElement("button");
+
+          button.type = "button";
+          button.className = "menu";
+
+          button.innerHTML = `
+            <b>${escapeHtml(menuName)}</b>
+            <small>${price.toLocaleString()}원</small>
+          `;
+
+          button.addEventListener("click", () => {
+            addToCart(menuName, price);
+          });
+
+          grid.appendChild(button);
+        });
+
+        categoryBox.appendChild(categoryTitle);
+        categoryBox.appendChild(grid);
+        menuContainer.appendChild(categoryBox);
+      }
+    }
+
+
+    function addToCart(menuName, price) {
+      if (!cart[menuName]) {
+        cart[menuName] = {
+          price: price,
+          qty: 0
+        };
+      }
+
+      cart[menuName].qty += 1;
+      renderCart();
+    }
+
+
+    function changeQuantity(menuName, change) {
+      if (!cart[menuName]) {
+        return;
+      }
+
+      cart[menuName].qty += change;
+
+      if (cart[menuName].qty <= 0) {
+        delete cart[menuName];
+      }
+
+      renderCart();
+    }
+
+
+    function renderCart() {
+      const cartContainer = document.getElementById("cart");
+      const cartItems = Object.entries(cart);
+
+      if (cartItems.length === 0) {
+        cartContainer.innerHTML =
+          '<div class="empty">메뉴를 선택하세요.</div>';
+      } else {
+        cartContainer.innerHTML = "";
+
+        cartItems.forEach(([menuName, item]) => {
+          const row = document.createElement("div");
+          row.className = "order-row";
+
+          const menuText = document.createElement("span");
+          menuText.textContent = menuName;
+
+          const quantityBox = document.createElement("span");
+          quantityBox.className = "qty";
+
+          const minusButton = document.createElement("button");
+          minusButton.type = "button";
+          minusButton.textContent = "−";
+
+          minusButton.addEventListener("click", () => {
+            changeQuantity(menuName, -1);
+          });
+
+          const quantity 
